@@ -8,8 +8,6 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.collections
 
-
-
 class Solver:
     def __init__(self, filename):
         self.ipa = 4 #integralPointsAmount
@@ -25,14 +23,13 @@ class Solver:
             self.clearGlobal()
             print("Iteracja:", i, "Sekundy:", (i+1) * self.grid.initData.simulationTimeStep)
             for element in self.grid.elements:
-                #print(element)
                 self.solveElement(element)
             self.printGlobalMatrixH()
             #--------------------------------
             self.globalMatrixC = np.dot(self.globalMatrixC, (1 / self.grid.initData.simulationTimeStep))
             self.globalMatrixH = np.add(self.globalMatrixH, self.globalMatrixC)
             t0 = self.grid.getTempMesh()
-            tmp = np.dot(self.globalMatrixC, t0)
+            tmp = np.dot(self.globalMatrixC, t0) #str9 2.43
             self.globalVectorP = np.add(tmp, self.globalVectorP)
             self.updateTemperature()
             tmp = np.array([(i+1) * self.grid.initData.simulationTimeStep, self.grid.getMinTemp(), self.grid.getMaxTemp()])
@@ -46,11 +43,11 @@ class Solver:
         dN_dx = np.zeros((4, 4))
         dN_dy = np.zeros((4, 4))
         for i in range(self.ipa):
-            tmp1_DetJ = (1 / self.detJ(jacobian[i]))
+            tmp1_DetJ = (1 / self.detJ(jacobian[i])) #1/detJ
             for j in range(self.ipa):
                 dN_dx[i, j] = tmp1_DetJ * (jacobian[i, 1, 1] * self.universalElement.dN_dksi[i,j] - jacobian[i, 0, 1] * self.universalElement.dN_deta[i,j])
                 dN_dy[i, j] = tmp1_DetJ * (jacobian[i, 1, 0] * self.universalElement.dN_dksi[i,j] - jacobian[i, 0, 0] * self.universalElement.dN_deta[i,j])
-        #rozwiazanie calki integral(k * ({N/dx}*{N/dx}^T} + {N/dy}*{N/dy}^T) dV) 6.9 FEM_transient_2d
+        #rozwiazanie calki integral(k * ({N/dx}*{N/dx}^T} + {N/dy}*{N/dy}^T) dV)
         localMatrixHfirst = np.zeros((4, 4))
         localMatrixHsecond = np.zeros((4, 4))
         localMatrixC = np.zeros((4, 4))
@@ -67,17 +64,15 @@ class Solver:
             tmpH = np.dot(tmpH, detJ)
             localMatrixHfirst = np.add(localMatrixHfirst, tmpH)
             #-----------------------------matrixC-----------------------------
-            tmpN_x_N = np.outer(self.universalElement.N[i], self.universalElement.N[i])
-            tmpC = np.add(tmpC, tmpN_x_N)
+            tmpNi_x_Ni = np.outer(self.universalElement.N[i], self.universalElement.N[i]) #dla Ni i -> integral point number, N[i] is vector
+            tmpC = np.add(tmpC, tmpNi_x_Ni)
             tmpC = np.dot(tmpC, detJ)
             localMatrixC = np.add(localMatrixC, tmpC)
-
         tmp_specificHeat_x_density = self.grid.initData.specificHeat * self.grid.initData.density # *c*ro
         localMatrixC = np.dot(localMatrixC, tmp_specificHeat_x_density)
         localMatrixHfirst = np.dot(localMatrixHfirst, self.grid.initData.conductivity)
         #-----------------------------Boundary Condidions:-----------------------------
         edgesN = self.universalElement.edgesN
-        liczba = 0
         for i in range(self.ipa):
             id1 = element.ID[i]
             k = i + 1
@@ -88,7 +83,7 @@ class Solver:
             node2 = self.grid.nodes[id2]
             if(self.checkBoundaryCondition(node1, node2)):
                 for j in range(2):
-                    tmp1 = np.outer(edgesN[i][j], edgesN[i][j])
+                    tmp1 = np.outer(edgesN[i][j], edgesN[i][j]) # edgesN[i][j] is vector
                     tmpH = np.dot(tmp1, self.det1J(node1, node2))
                     localMatrixHsecond = np.add(localMatrixHsecond, tmpH)
                     # -----------------------------vectorP-----------------------------
@@ -121,11 +116,11 @@ class Solver:
         jacobian = np.zeros((self.ipa, 2, 2))
         for i in range(4):
             for j in range(4):
-                id = element.ID[j] # Zamienieno kolejnosc
-                jacobian[i, 1, 0] += (self.universalElement.dN_deta[i, j] * self.grid.nodes[id].x) #dx_deta
-                jacobian[i, 1, 1] += (self.universalElement.dN_deta[i, j] * self.grid.nodes[id].y) #dy_deta
+                id = element.ID[j]
                 jacobian[i, 0, 0] += (self.universalElement.dN_dksi[i, j] * self.grid.nodes[id].x) #dx_dksi
                 jacobian[i, 0, 1] += (self.universalElement.dN_dksi[i, j] * self.grid.nodes[id].y) #dy_dksi
+                jacobian[i, 1, 0] += (self.universalElement.dN_deta[i, j] * self.grid.nodes[id].x) #dx_deta
+                jacobian[i, 1, 1] += (self.universalElement.dN_deta[i, j] * self.grid.nodes[id].y) #dy_deta
         #print(element)
         #print(jacobian[0])
         return jacobian

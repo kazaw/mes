@@ -34,7 +34,7 @@ dN_detaFunctions = [dN_deta1, dN_deta2, dN_deta3, dN_deta4]
 
 class UniversalElement:
     def __init__(self):
-        self.ip = 0.5773502691896257 #Wspólrzedne punktu calkowania
+        self.ip = 0.57735 #Wspólrzedne punktu calkowania
         #assign values to ksi & eta
         self.ksi = np.zeros((4))
         self.ksi[0] = -0.57735
@@ -47,11 +47,9 @@ class UniversalElement:
         self.eta[2] = 0.57735
         self.eta[3] = 0.57735
 
-        self.edgeIntPoints = np.zeros((2,2))
-        self.edgeIntPoints[0, 0] = - 0.57735
-        self.edgeIntPoints[0, 1] = 1
-        self.edgeIntPoints[1, 0] = 0.57735
-        self.edgeIntPoints[1, 1] = 1
+        self.edgeIntPoints = np.zeros((2))
+        self.edgeIntPoints[0] = - 0.57735
+        self.edgeIntPoints[1] = 0.57735
 
         self.dN_dksi = np.zeros((4,4))
         self.dN_deta = np.zeros((4,4))
@@ -78,14 +76,15 @@ class UniversalElement:
         leftEdge = np.zeros((2, 4))
         for i in range(2):
             for j in range(4):
-                bottomEdge[i, j] = shapeFunctions[j](self.edgeIntPoints[i, 0], -1)
-                rightEdge[i, j] = shapeFunctions[j](1, self.edgeIntPoints[i, 0])
-                topEdge[i, j] = shapeFunctions[j](self.edgeIntPoints[i, 0], 1)
-                leftEdge[i, j] = shapeFunctions[j](-1, self.edgeIntPoints[i, 0])
+                bottomEdge[i, j] = shapeFunctions[j](self.edgeIntPoints[i], -1)
+                rightEdge[i, j] = shapeFunctions[j](1, self.edgeIntPoints[i])
+                topEdge[i, j] = shapeFunctions[j](self.edgeIntPoints[i], 1)
+                leftEdge[i, j] = shapeFunctions[j](-1, self.edgeIntPoints[i])
         self.edgesN[0] = bottomEdge
         self.edgesN[1] = rightEdge
         self.edgesN[2] = topEdge
         self.edgesN[3] = leftEdge
+        #print(self.edgesN)
     #----------------------------------PRINTING--------------------------------------
     def printN(self):
         i = 1
