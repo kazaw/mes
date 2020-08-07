@@ -1,3 +1,2 @@
 # mes
-Project for University
-Finite Element Method
+Project for University - Finite Element Method
